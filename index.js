@@ -1,3 +1,4 @@
+const cors = require("cors");
 const express = require("express");
 const connectDB = require("./configs/db.js");
 require("dotenv").config();
@@ -5,6 +6,7 @@ const { userRouter } = require("./routes/User.route.js");
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // app.get("/", (req, res) => {
 // 	res.send("Welcome to home page!");
