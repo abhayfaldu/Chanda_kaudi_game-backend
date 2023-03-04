@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
-const http = require("http");
+const fs = require("fs");
+const https = require("https");
 const cors = require("cors");
 const connectDB = require("./configs/db.js");
 require("dotenv").config();
@@ -8,7 +9,7 @@ const { userRouter } = require("./routes/User.route.js");
 const { Server } = require("socket.io");
 app.use(cors());
 
-const server = http.createServer(app);
+const server = https.createServer(app);
 
 const io = new Server(server, {
 	cors: {
@@ -21,15 +22,19 @@ io.on("connection", socket => {
 	const userID = socket.id;
 	console.log("connected to " + userID);
 
-	socket.on("join_room", (room) => { 
-		socket.join(room);
-		console.log(`User with ID: ${userID} joined room ${room}`);
-	})
+	socket.on("join_room", room => {
+		try {
+			socket.join(room);
+			console.log(`User with ID: ${userID} joined room ${room}`);
+		} catch (err) {
+			fs.writeFileSync("/data.txt", err);
+		}
+	});
 
-	socket.on("send_message", (messageData) => { 
+	socket.on("send_message", messageData => {
 		// console.log('messageData:', messageData)
 		socket.to(messageData.room).emit("receive_message", messageData);
-	})
+	});
 
 	socket.on("player_played", boardState => {
 		// console.log("boardState:", boardState);
@@ -38,9 +43,9 @@ io.on("connection", socket => {
 			.emit("player_played_server_to_client", boardState);
 	});
 
-	socket.on("disconnect", () => { 
+	socket.on("disconnect", () => {
 		console.log("disconnected from " + userID);
-	})
+	});
 });
 
 app.use(express.json());
